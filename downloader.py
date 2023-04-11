@@ -17,7 +17,7 @@ with open('config.json', 'r') as f:
 base_path = "https://lecturecapture.sliit.lk/archive/saved/Personal_Capture/"
 
 
-def getPrefferedFolder():
+def getPreferredFolder():
 
     folder = ""
     if "savePath" in config:
@@ -74,8 +74,8 @@ def get_actual_path(link):
 
 
 def download_video(main_path, folderPath):
-    requests.get(
-        "https://api.countapi.xyz/hit/com.navindu.eduscope/download-start")
+    # requests.get(
+    #     "https://api.countapi.xyz/hit/com.navindu.eduscope/download-start")
     char = ''
 
     main_path_length = len(main_path)
@@ -141,38 +141,40 @@ def download_video(main_path, folderPath):
     color_print(formatted_text=[
         ("green", "\nDownload Complete!.")])
 
-    requests.get(
-        "https://api.countapi.xyz/hit/com.navindu.eduscope/download-complete")
+    # requests.get(
+    #     "https://api.countapi.xyz/hit/com.navindu.eduscope/download-complete")
 
     return file_name
 
 
-def convert(file_name, file_path):
-    requests.get(
-        "https://api.countapi.xyz/hit/com.navindu.eduscope/convert-start")
+def convert(file_name, file_path, is_delete_ts_files):
 
     color_print(formatted_text=[("gold", "\nConverting to mp4... ")])
 
     infile = file_path + file_name + ".ts"
     outfile = file_path + file_name + ".mp4"
+
+    if is_delete_ts_files == False:
+        outfile = f"{file_path}mp4/{file_name}.mp4"
+
     subprocess.run(['ffmpeg', '-i', infile, outfile,
                    "-hide_banner", "-nostats", "-loglevel", "panic"])
-    os.remove(file_path + file_name + ".ts")
+    
+    if is_delete_ts_files == True:
+        os.remove(file_path + file_name + ".ts")
 
-    color_print(formatted_text=[("green", "\nDownloading Complete")])
-
-    requests.get(
-        "https://api.countapi.xyz/hit/com.navindu.eduscope/convert-complete")
+    color_print(formatted_text=[("green", "\Convert Complete!")])
 
 
 if __name__ == '__main__':
 
-    today_date_time = datetime.today().strftime('%Y_%m_%d_%H_%M_%S')
+    is_delete_ts_files = False
+    if "isDeleteTsFiles" in config:
+        is_delete_ts_files = config["isDeleteTsFiles"]
 
-    with open('config.json', 'r') as f:
-        config = json.load(f)
-
-    requests.get("https://api.countapi.xyz/hit/com.navindu.eduscope/opens")
+    convert_to_mp4 = True
+    if "convertToMP4" in config:
+        convert_to_mp4 = config["convertToMP4"]
 
     print(f"** Task Started **")
     downloaded_files = []
@@ -186,7 +188,7 @@ if __name__ == '__main__':
                         ("white", link + "\n")])
 
             path = get_actual_path(link)
-            filePath = getPrefferedFolder()
+            filePath = getPreferredFolder()
             file = download_video(path, filePath)
 
             downloaded_files.append([file, filePath])
@@ -195,12 +197,13 @@ if __name__ == '__main__':
         print(f"{e}")
 
     # Convert videos
-    try:
-        for file in downloaded_files:
-            convert(file[0], file[1])
+    if convert_to_mp4 == True:
+        try:
+            for file in downloaded_files:
+                convert(file[0], file[1], is_delete_ts_files)
 
-    except Exception as e:
-        print(f"{e}")
+        except Exception as e:
+            print(f"{e}")
 
     print(f"** Task Completed **")
     sys.exit()

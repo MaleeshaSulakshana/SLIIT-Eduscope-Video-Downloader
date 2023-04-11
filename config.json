@@ -3,5 +3,7 @@
     "quality": "_360.m3u8",
     "links": [
         ""
-    ]
+    ],
+    "convertToMP4": true,
+    "isDeleteTsFiles": false
 }
