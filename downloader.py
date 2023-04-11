@@ -174,6 +174,7 @@ if __name__ == '__main__':
 
     requests.get("https://api.countapi.xyz/hit/com.navindu.eduscope/opens")
 
+    print(f"** Task Started **")
     downloaded_files = []
 
     # Download videos
@@ -201,4 +202,5 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"{e}")
 
+    print(f"** Task Completed **")
     sys.exit()
