@@ -8,20 +8,10 @@ from datetime import datetime
 
 from InquirerPy.utils import color_print
 
-today_date_time = datetime.today().strftime('%Y_%m_%d_%H_%M_%S')
-
-config = {}
-with open('config.json', 'r') as f:
-    config = json.load(f)
-
 base_path = "https://lecturecapture.sliit.lk/archive/saved/Personal_Capture/"
 
 
-def getPreferredFolder():
-
-    folder = ""
-    if "savePath" in config:
-        folder = config["savePath"]
+def getPreferredFolder(folder, today_date_time):
 
     if folder == "":
         return "./Downloads/"
@@ -44,11 +34,7 @@ def getPreferredFolder():
                 sys.exit()
 
 
-def get_actual_path(link):
-
-    # _144.m3u8
-    # _360.m3u8
-    quality = config["quality"]
+def get_actual_path(link, quality):
 
     if(len(link) == 68):
         ID = link[-23:] + "&full=ZnVsbA%3D%3D"
@@ -74,8 +60,7 @@ def get_actual_path(link):
 
 
 def download_video(main_path, folderPath):
-    # requests.get(
-    #     "https://api.countapi.xyz/hit/com.navindu.eduscope/download-start")
+
     char = ''
 
     main_path_length = len(main_path)
@@ -141,9 +126,6 @@ def download_video(main_path, folderPath):
     color_print(formatted_text=[
         ("green", "\nDownload Complete!.")])
 
-    # requests.get(
-    #     "https://api.countapi.xyz/hit/com.navindu.eduscope/download-complete")
-
     return file_name
 
 
@@ -168,42 +150,60 @@ def convert(file_name, file_path, is_delete_ts_files):
 
 if __name__ == '__main__':
 
-    is_delete_ts_files = False
-    if "isDeleteTsFiles" in config:
-        is_delete_ts_files = config["isDeleteTsFiles"]
+    today_date_time = datetime.today().strftime('%Y_%m_%d_%H_%M_%S')
 
-    convert_to_mp4 = True
-    if "convertToMP4" in config:
-        convert_to_mp4 = config["convertToMP4"]
+    configJson = []
+    with open('config.json', 'r') as f:
+        configJson = json.load(f)
 
-    print(f"** Task Started **")
-    downloaded_files = []
+    for config in configJson:
 
-    # Download videos
-    try: 
-        for link in config["links"]:
+        folder = ""
+        if "savePath" in config:
+            folder = config["savePath"]
 
-            color_print(formatted_text=[
-                        ("gold", "\nReady to download: "),
-                        ("white", link + "\n")])
+        # _144.m3u8 or _360.m3u8
+        quality = "_360.m3u8" 
+        if "quality" in config:
+            quality = config["quality"]
 
-            path = get_actual_path(link)
-            filePath = getPreferredFolder()
-            file = download_video(path, filePath)
+        is_delete_ts_files = False
+        if "isDeleteTsFiles" in config:
+            is_delete_ts_files = config["isDeleteTsFiles"]
 
-            downloaded_files.append([file, filePath])
-    
-    except Exception as e:
-        print(f"{e}")
+        convert_to_mp4 = True
+        if "convertToMP4" in config:
+            convert_to_mp4 = config["convertToMP4"]
 
-    # Convert videos
-    if convert_to_mp4 == True:
-        try:
-            for file in downloaded_files:
-                convert(file[0], file[1], is_delete_ts_files)
+        print(f"** Task Started **")
+        downloaded_files = []
 
+        # Download videos
+        try: 
+            for link in config["links"]:
+
+                color_print(formatted_text=[
+                            ("gold", "\nReady to download: "),
+                            ("white", link + "\n")])
+
+                path = get_actual_path(link, quality)
+                filePath = getPreferredFolder(folder, today_date_time)
+                file = download_video(path, filePath)
+
+                downloaded_files.append([file, filePath])
+        
         except Exception as e:
             print(f"{e}")
 
-    print(f"** Task Completed **")
+        # Convert videos
+        if convert_to_mp4 == True:
+            try:
+                for file in downloaded_files:
+                    convert(file[0], file[1], is_delete_ts_files)
+
+            except Exception as e:
+                print(f"{e}")
+
+        print(f"** Task Completed **")
+
     sys.exit()
